@@ -8,8 +8,6 @@ pip install -r requirements.txt
 echo "Downloading NLTK data..."
 python -c "import nltk; nltk.download('stopwords', quiet=True); nltk.download('punkt', quiet=True)"
 
-echo "Training the model..."
-python train_model.py
-
 echo "Build complete!"
-
+echo ""
+echo "NOTE: If model.pkl and vectorizer.pkl don't exist, please run train_model.py locally before deploying."
