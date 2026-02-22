@@ -5,6 +5,9 @@
 echo "Installing dependencies..."
 pip install -r requirements.txt
 
+echo "Downloading NLTK data..."
+python -c "import nltk; nltk.download('stopwords', quiet=True); nltk.download('punkt', quiet=True)"
+
 echo "Training the model..."
 python train_model.py
 

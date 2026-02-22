@@ -21,7 +21,7 @@ TRUE_NEWS_PATH = BASE_DIR / 'data' / 'True.csv'
 
 # Flask configuration
 SECRET_KEY = os.environ.get('SECRET_KEY', 'dev-secret-key-change-in-production')
-DEBUG = os.environ.get('DEBUG', 'True').lower() == 'true'
+DEBUG = os.environ.get('DEBUG', 'False').lower() == 'true'
 PORT = int(os.environ.get('PORT', 5000))
 
 # Model configuration
