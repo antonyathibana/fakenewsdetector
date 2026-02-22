@@ -1,0 +1,193 @@
+{% extends "base.html" %}
+
+{% block title %}Prediction Result - Fake News Detector{% endblock %}
+
+{% block content %}
+
+{% if result %}
+
+{% set prediction = result.prediction | upper %}
+{% set confidence = result.confidence | float %}
+{% set fake_prob = (result.fake_probability if result.fake_probability is not none else 0) | float %}
+{% set real_prob = (result.real_probability if result.real_probability is not none else 0) | float %}
+
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+
+            <!-- ML Prediction Card -->
+            <div class="card mb-4">
+
+                <!-- HEADER -->
+                <div class="result-header {% if prediction == 'FAKE' %}fake{% else %}real{% endif %}">
+                    <div class="result-icon">
+                        {% if prediction == 'FAKE' %}
+                            <i class="fas fa-times"></i>
+                        {% else %}
+                            <i class="fas fa-check"></i>
+                        {% endif %}
+                    </div>
+                    <h2>{{ prediction }} NEWS</h2>
+                    <p class="mb-3">The article appears to be {{ prediction | lower }}</p>
+                    <div class="result-confidence">{{ "%.0f"|format(confidence) }}</div>
+                    <p class="text-muted mb-0">ML Confidence Score</p>
+                </div>
+
+                <!-- BODY -->
+                <div class="card-body p-5 text-center">
+
+                    <!-- Progress -->
+                    <div class="result-progress">
+                        <div class="progress">
+                            <div class="progress-bar {% if prediction == 'FAKE' %}bg-danger{% else %}bg-success{% endif %}" 
+                                 role="progressbar" 
+                                 aria-valuenow="{{ confidence }}" 
+                                 aria-valuemin="0" 
+                                 aria-valuemax="100" 
+                                 style="--progress-width: {{ confidence | int }}%">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Probability Cards -->
+                    <div class="row mt-5 g-4">
+                        <div class="col-md-6">
+                            <div class="card card-glow-danger h-100">
+                                <div class="card-body text-center">
+                                    <h6 class="text-muted mb-2">Fake Probability</h6>
+                                    <h3 class="text-danger-custom mb-0">{{ "%.2f"|format(fake_prob) }}%</h3>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="card card-glow-success h-100">
+                                <div class="card-body text-center">
+                                    <h6 class="text-muted mb-2">Real Probability</h6>
+                                    <h3 class="text-success-custom mb-0">{{ "%.2f"|format(real_prob) }}%</h3>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Buttons -->
+                    <div class="mt-5">
+                        <a href="{{ url_for('index') }}" class="btn btn-primary me-2">
+                            <i class="fas fa-search me-2"></i>Check Another
+                        </a>
+                        <a href="{{ url_for('history') }}" class="btn btn-outline-neon">
+                            <i class="fas fa-history me-2"></i>View History
+                        </a>
+                    </div>
+
+                </div>
+
+            </div>
+
+            <!-- Google Fact Check Card -->
+            {% if fact_check %}
+            <div class="card fact-check-card">
+                <div class="card-header bg-info text-white">
+                    <h4 class="mb-0"><i class="fas fa-globe me-2"></i>External Fact Check</h4>
+                </div>
+                <div class="card-body">
+                    
+                    {% if not fact_check.enabled %}
+                    <!-- API Not Configured -->
+                    <div class="alert alert-secondary">
+                        <i class="fas fa-cog me-2"></i>
+                        <strong>Fact Check API not configured.</strong>
+                        <p class="mb-0 mt-2">To enable Google Fact Check API:</p>
+                        <ol class="mb-0 mt-2 small">
+                            <li>Get an API key from <a href="https://developers.google.com/fact-check/tools-api" target="_blank" class="alert-link">Google Developers</a></li>
+                            <li>Set environment variable: <code>export GOOGLE_FACT_CHECK_API_KEY="your-api-key"</code></li>
+                            <li>Restart the application</li>
+                        </ol>
+                    </div>
+                    
+                    {% elif fact_check.success %}
+                        {% if fact_check.claims and fact_check.claims|length > 0 %}
+                        <!-- Claims Found -->
+                        <div class="alert alert-info">
+                            <i class="fas fa-search me-2"></i>
+                            <strong>Search Query:</strong> "{{ fact_check.query }}"
+                        </div>
+                        
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Publisher</th>
+                                        <th>Rating</th>
+                                        <th>Claim</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for claim in fact_check.claims %}
+                                    <tr>
+                                        <td><strong>{{ claim.publisher }}</strong></td>
+                                        <td>
+                                            {% set rating = claim.rating_label|upper %}
+                                            {% if 'FALSE' in rating or 'PANTS' in rating or 'FALSE' in claim.rating|upper %}
+                                            <span class="badge bg-danger">False</span>
+                                            {% elif 'TRUE' in rating or 'REAL' in rating %}
+                                            <span class="badge bg-success">True</span>
+                                            {% elif 'PARTLY' in rating or 'MIXED' in rating %}
+                                            <span class="badge bg-warning text-dark">Partly False</span>
+                                            {% elif 'MISLEADING' in rating %}
+                                            <span class="badge bg-warning text-dark">Misleading</span>
+                                            {% else %}
+                                            <span class="badge bg-secondary">{{ claim.rating }}</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <small class="text-muted">{{ claim.claim_text[:100] }}{% if claim.claim_text|length > 100 %}...{% endif %}</small>
+                                        </td>
+                                        <td>
+                                            <a href="{{ claim.url }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                                <i class="fas fa-external-link-alt"></i> View
+                                            </a>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        {% else %}
+                        <!-- No Claims Found -->
+                        <div class="alert alert-success">
+                            <i class="fas fa-check-circle me-2"></i>
+                            <strong>No verified claims found.</strong>
+                            <p class="mb-0 mt-2">The submitted text doesn't have any matching fact checks in our external sources.</p>
+                        </div>
+                        {% endif %}
+                    
+                    {% else %}
+                    <!-- API Error -->
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        <strong>Fact Check Error:</strong> {{ fact_check.error }}
+                        <p class="mb-0 mt-2">Please check your API key configuration and try again later.</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+
+        </div>
+    </div>
+</div>
+
+{% else %}
+
+<div class="container py-5 text-center">
+    <div class="alert alert-warning">
+        No prediction result available.
+    </div>
+</div>
+
+{% endif %}
+
+{% endblock %}
+

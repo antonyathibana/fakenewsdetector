@@ -1,0 +1,219 @@
+{% extends "base.html" %}
+
+{% block title %}Fake News Detector - AI-Powered Detection{% endblock %}
+
+{% block content %}
+
+<!-- Hero Section -->
+<div class="hero-section">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-7">
+                <div class="hero-badge">
+                    <i class="fas fa-brain"></i>
+                    AI-Powered Detection
+                </div>
+                <h1 class="display-4 fw-bold mb-4">
+                    Detect Fake News<br>
+                    <span class="text-gradient">With AI Intelligence</span>
+                </h1>
+                <p class="lead text-secondary mb-4">
+                    Our advanced machine learning system analyzes news articles in real-time to determine authenticity with unprecedented accuracy.
+                </p>
+                <div class="d-flex gap-3 flex-wrap">
+                    <span class="badge badge-primary">
+                        <i class="fas fa-brain me-2"></i>ML Powered
+                    </span>
+                    <span class="badge badge-secondary">
+                        <i class="fas fa-bolt me-2"></i>Instant Results
+                    </span>
+                    <span class="badge badge-success">
+                        <i class="fas fa-lock me-2"></i>Secure
+                    </span>
+                </div>
+            </div>
+            <div class="col-lg-5 text-center">
+                <img src="{{ url_for('static', filename='images/fake-news.png') }}" alt="Fake News Detection" class="img-fluid hero-img">
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Main Content Container -->
+<main class="container">
+    <!-- Stats Section -->
+    <div class="row mb-5 g-4">
+        <div class="col-md-4">
+            <div class="card-stats">
+                <h3 data-count="{{ stats.total }}">{{ stats.total }}</h3>
+                <p>Total Predictions</p>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card-stats">
+                <h3 data-count="{{ stats.fake }}">{{ stats.fake }}</h3>
+                <p>Fake News Detected</p>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card-stats">
+                <h3 data-count="{{ stats.real }}">{{ stats.real }}</h3>
+                <p>Real News Found</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Prediction Form -->
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <div class="card">
+                <div class="card-body p-5">
+                    <h2 class="text-center mb-4">
+                        <span class="text-gradient">Check Your News</span>
+                    </h2>
+                    
+                    <!-- Prediction Form -->
+                    <form id="predictForm" method="POST" action="{{ url_for('predict') }}">
+                        <!-- Text Input -->
+                        <div id="textInputSection">
+                            <textarea 
+                                name="news_text" 
+                                class="form-control" 
+                                rows="8" 
+                                placeholder="Paste your news article text here...
+
+Example: The government announced new policies regarding climate change..."
+                                required
+                            ></textarea>
+                        </div>
+                        
+                        <div class="text-center mt-4">
+                            <button type="submit" class="btn btn-primary btn-lg px-5" id="submitBtn">
+                                <i class="fas fa-search me-2"></i>Analyze News
+                            </button>
+                        </div>
+                    </form>
+                    
+                    <!-- Loading Indicator -->
+                    <div class="text-center mt-4" id="loadingIndicator" style="display: none;">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <p class="mt-2 text-muted">Analyzing news article...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Features Section -->
+    <div class="row mt-5">
+        <div class="col-12 text-center mb-4">
+            <h2 class="section-title">How It Works</h2>
+        </div>
+    </div>
+    
+    <div class="row g-4">
+        <div class="col-md-4">
+            <div class="card card-feature h-100">
+                <div class="card-body">
+                    <div class="feature-icon-num">1</div>
+                    <h5>Input News</h5>
+                    <p class="text-muted mb-0">
+                        Paste the news article text to analyze.
+                    </p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card card-feature h-100">
+                <div class="card-body">
+                    <div class="feature-icon-num">2</div>
+                    <h5>AI Analysis</h5>
+                    <p class="text-muted mb-0">
+                        Our machine learning model analyzes the text using TF-IDF vectorization.
+                    </p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card card-feature h-100">
+                <div class="card-body">
+                    <div class="feature-icon-num">3</div>
+                    <h5>Get Results</h5>
+                    <p class="text-muted mb-0">
+                        Receive instant prediction with confidence score.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent History Section -->
+    {% if predictions and predictions|length > 0 %}
+    <div class="row mt-5">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2 class="section-title mb-0">Recent Predictions</h2>
+                <a href="{{ url_for('history') }}" class="btn btn-outline-primary">View All History</a>
+            </div>
+            
+            <div class="card">
+                <div class="card-body p-0">
+                    <div class="table-container">
+                        <table class="table mb-0 align-middle">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Prediction</th>
+                                    <th>Confidence</th>
+                                    <th>Date</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for pred in predictions[:5] %}
+                                <tr>
+                                    <td>#{{ pred.id }}</td>
+                                    <td>
+                                        {% if pred.prediction|upper == 'FAKE' %}
+                                        <span class="badge badge-danger">FAKE</span>
+                                        {% else %}
+                                        <span class="badge badge-success">REAL</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ pred.confidence }}%</td>
+                                    <td class="text-muted">{{ pred.created_at }}</td>
+                                    <td>
+                                        <a href="{{ url_for('view_prediction', prediction_id=pred.id) }}" class="btn btn-sm btn-outline-primary">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</main>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Form submission handler
+    document.getElementById('predictForm').addEventListener('submit', function(e) {
+        const submitBtn = document.getElementById('submitBtn');
+        const loadingIndicator = document.getElementById('loadingIndicator');
+        
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fas fa-circle-notch fa-spin me-2"></i>Analyzing...';
+        loadingIndicator.style.display = 'block';
+    });
+</script>
+{% endblock %}
+
