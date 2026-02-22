@@ -10,5 +10,6 @@ services:
         value: "false"
       - key: SECRET_KEY
         generateValue: true
+    pythonVersion: "3.14"
     plan: free
 
